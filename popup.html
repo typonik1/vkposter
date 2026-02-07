@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:450px;background:#1a1a2e;color:#e1e3e6;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px}
+.hdr{padding:16px;background:linear-gradient(135deg,#16213e,#1a1a2e);border-bottom:1px solid #2a2a4a;text-align:center;font-size:16px;font-weight:700;color:#fff}
+.sec{padding:14px 16px;border-bottom:1px solid #2a2a4a}
+.lbl{display:block;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:600}
+input,textarea{width:100%;padding:9px 11px;background:#16213e;border:1px solid #2a2a4a;border-radius:7px;color:#e1e3e6;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+input:focus,textarea:focus{border-color:#5181b8}
+textarea{min-height:60px;resize:vertical}
+.btn{width:100%;padding:10px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;font-family:inherit;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.b1{background:#5181b8;color:#fff}
+.b2{background:#4CAF50;color:#fff}
+.b3{background:#e64646;color:#fff}
+.b4{background:#333;color:#ccc}
+.st{padding:9px 11px;border-radius:7px;font-size:12px;margin-top:7px;display:none}
+.st.s{display:block}
+.st.i{background:rgba(81,129,184,.15);color:#7db4e0}
+.st.o{background:rgba(46,125,50,.15);color:#66bb6a}
+.st.e{background:rgba(198,40,40,.15);color:#ef5350}
+.gl{max-height:200px;overflow-y:auto;margin-top:4px}
+.gi{display:flex;align-items:center;padding:5px 7px;border-radius:5px;cursor:pointer}
+.gi:hover{background:#2a2a4a}
+.gi input{width:16px;height:16px;margin-right:7px;accent-color:#5181b8;cursor:pointer}
+.gi img{width:28px;height:28px;border-radius:50%;margin-right:7px}
+.gi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.pr{width:100%;height:4px;background:#2a2a4a;border-radius:2px;margin-top:6px;display:none}
+.pr.s{display:block}
+.pb{height:100%;background:#5181b8;border-radius:2px;transition:width .3s;width:0}
+.mt{display:flex;background:#16213e;border-radius:7px;overflow:hidden}
+.mb{flex:1;padding:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#666;transition:all .2s}
+.mb.a{background:#5181b8;color:#fff}
+.rw{display:flex;gap:6px;margin-top:4px}
+.rw .btn{flex:1;font-size:11px;padding:6px}
+.cnt{font-size:10px;color:#555;margin-top:3px}
+.aok{color:#66bb6a;font-size:12px;margin-top:3px}
+.ano{color:#ef5350;font-size:12px;margin-top:3px}
+.prev{margin-top:7px;background:#16213e;border-radius:7px;padding:9px;font-size:12px;max-height:80px;overflow-y:auto;display:none;line-height:1.4}
+.prev img{max-width:100%;border-radius:5px;margin-top:5px}
+</style>
+</head>
+<body>
+
+<div class="hdr">📋 VK Reposter Pro</div>
+
+<!-- AUTH -->
+<div class="sec" id="sa">
+  <div class="lbl">🔑 авторизация</div>
+  <div id="as" class="ano">Не авторизован</div>
+  <button class="btn b1" id="ba">Авторизоваться ВК</button>
+  <input type="password" id="ti" placeholder="Или вставьте токен..." style="margin-top:5px">
+  <button class="btn b1" id="bs" style="margin-top:3px">💾 Сохранить токен</button>
+</div>
+
+<!-- POST -->
+<div class="sec" id="sp" style="display:none">
+  <div class="lbl">🔗 ссылка на пост</div>
+  <input type="text" id="pu" placeholder="https://vk.com/wall-123456_789">
+  <button class="btn b2" id="bl">📌 Загрузить пост</button>
+  <div class="prev" id="pv"></div>
+</div>
+
+<!-- MODE -->
+<div class="sec" id="sm" style="display:none">
+  <div class="lbl">📝 режим</div>
+  <div class="mt" id="mt">
+    <button class="mb a" data-m="copy">📋 Копия (от имени группы)</button>
+    <button class="mb" data-m="repost">🔄 Репост</button>
+  </div>
+</div>
+
+<!-- TEXT -->
+<div class="sec" id="sx" style="display:none">
+  <div class="lbl">✏️ текст поста</div>
+  <textarea id="pt"></textarea>
+</div>
+
+<!-- SCHEDULE -->
+<div class="sec" id="sd" style="display:none">
+  <div class="lbl">⏰ отложенный постинг</div>
+  <label style="display:flex;align-items:center;margin-bottom:6px;cursor:pointer">
+    <input type="checkbox" id="sch" style="width:16px;height:16px;margin-right:7px;accent-color:#5181b8;cursor:pointer">
+    <span style="font-size:12px;color:#ccc">Отложить публикацию</span>
+  </label>
+  <div id="sdw" style="display:none">
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <input type="date" id="sdd" style="flex:1;padding:8px;background:#16213e;border:1px solid #2a2a4a;border-radius:7px;color:#e1e3e6;font-size:12px;outline:none">
+      <input type="time" id="sdt" style="flex:1;padding:8px;background:#16213e;border:1px solid #2a2a4a;border-radius:7px;color:#e1e3e6;font-size:12px;outline:none">
+    </div>
+  </div>
+</div>
+
+<!-- GROUPS -->
+<div class="sec" id="sg" style="display:none">
+  <div class="lbl">📢 группы</div>
+  <input type="text" id="sr" placeholder="🔍 Поиск...">
+  <div class="rw">
+    <button class="btn b1" id="ga">Все</button>
+    <button class="btn b4" id="gn">Снять</button>
+  </div>
+  <div class="cnt" id="gc">0 выбрано</div>
+  <div class="gl" id="gl"></div>
+</div>
+
+<!-- SEND -->
+<div class="sec" id="ss" style="display:none">
+  <button class="btn b2" id="go">🚀 Отправить в группы</button>
+  <div class="st" id="st"></div>
+  <div class="pr" id="pr"><div class="pb" id="pb"></div></div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

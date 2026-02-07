@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "VK Reposter Pro",
+  "version": "1.0",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://vk.com/*",
+    "https://vk.ru/*",
+    "https://api.vk.com/*",
+    "https://oauth.vk.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://vk.com/*", "https://vk.ru/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
