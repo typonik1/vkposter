@@ -10,13 +10,16 @@ function startAuthFlow() {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === 'open_popup') {
-    const baseUrl = chrome.runtime.getURL('popup.html');
-    const targetUrl = message.postUrl
-      ? `${baseUrl}?post=${encodeURIComponent(message.postUrl)}`
-      : baseUrl;
-    chrome.tabs.create({ url: targetUrl });
-    sendResponse({ ok: true });
-    return true;
+    const tabId = sender?.tab?.id;
+    if (tabId != null && chrome.action?.openPopup) {
+      chrome.action.openPopup({ tabId }).then(
+        () => sendResponse({ ok: true }),
+        (err) => sendResponse({ ok: false, error: String(err) })
+      );
+      return true;
+    }
+    sendResponse({ ok: false, error: 'Popup API unavailable' });
+    return false;
   }
   if (message?.type === 'start_auth') {
     startAuthFlow();
