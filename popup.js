@@ -31,7 +31,11 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
     }catch(e){$('as').textContent='❌ Токен недействителен';$('as').className='ano'}
   }
   // Auto URL from content script or current page
-  if(d.vkr_last_post){
+  const params=new URLSearchParams(location.search);
+  const qp=params.get('post');
+  if(qp){
+    $('pu').value=qp;
+  }else if(d.vkr_last_post){
     $('pu').value=d.vkr_last_post;
     chrome.storage.local.remove('vkr_last_post');
   }else{
