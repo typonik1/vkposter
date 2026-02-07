@@ -33,12 +33,16 @@ function findActionsContainer(postEl) {
     '.PostActionsWrapper',
     '.PostActionsBottom',
     '.PostBottomActions',
+    '.PostFooter',
+    '.post_footer',
     '.like_wrap',
     '.like_cont',
     '.PostButton',
+    '.PostButtonGroup',
     '[class*="PostActions"]',
     '[class*="post_actions"]',
     '[class*="PostBottom"]',
+    '[class*="PostFooter"]',
     '[class*="like_wrap"]',
     '[class*="like_cont"]'
   ];
@@ -54,6 +58,10 @@ function findActionsContainer(postEl) {
       actionButton.closest('[class*="Actions"], [class*="actions"], [class*="PostButton"], [class*="like"]') ||
       actionButton.parentElement
     );
+  }
+  const timeLink = postEl.querySelector('a[href*="wall"], a[href*="post"]');
+  if (timeLink) {
+    return timeLink.parentElement || timeLink;
   }
   return null;
 }
@@ -84,7 +92,7 @@ function addButton(postEl) {
 
 function processPosts(root = document) {
   const posts = root.querySelectorAll(
-    'div[id^="post-"], [data-post-id], article[data-post-id], .post, .wall_item, .feed_row'
+    '[data-post-id], div[id^="post-"], article[data-post-id], .post, .wall_item, .feed_row, .Post'
   );
   posts.forEach((postEl) => {
     if (postEl.getAttribute(PROCESSED_ATTR)) return;
@@ -99,12 +107,13 @@ const observer = new MutationObserver((mutations) => {
       if (!(node instanceof HTMLElement)) return;
       if (
         node.matches &&
-        (node.matches('div[id^="post-"]') ||
-          node.matches('[data-post-id]') ||
+        (node.matches('[data-post-id]') ||
+          node.matches('div[id^="post-"]') ||
           node.matches('article[data-post-id]') ||
           node.matches('.post') ||
           node.matches('.wall_item') ||
-          node.matches('.feed_row'))
+          node.matches('.feed_row') ||
+          node.matches('.Post'))
       ) {
         processPosts(node.parentElement || document);
       } else if (node.querySelectorAll) {
@@ -115,4 +124,5 @@ const observer = new MutationObserver((mutations) => {
 });
 
 processPosts();
+setTimeout(processPosts, 1500);
 observer.observe(document.documentElement, { childList: true, subtree: true });

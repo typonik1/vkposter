@@ -15,6 +15,23 @@ function ss(t,c){const e=$('st');e.textContent=t;e.className='st s '+c}
 function $(id){return document.getElementById(id)}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
+function uploadFormData(url,formData){
+  return new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',url,true);
+    xhr.responseType='text';
+    xhr.onload=()=>{
+      try{
+        resolve(JSON.parse(xhr.responseText));
+      }catch(e){
+        reject(e);
+      }
+    };
+    xhr.onerror=()=>reject(new Error('Failed to upload'));
+    xhr.send(formData);
+  });
+}
+
 async function uploadPhotoToGroup(gid,photo){
   const srv=await api('photos.getWallUploadServer',{group_id:gid});
   const sizes=photo.sizes||[];
@@ -28,7 +45,7 @@ async function uploadPhotoToGroup(gid,photo){
   const blob=await fetch(best.url,{credentials:'include'}).then(r=>r.blob());
   const fd=new FormData();
   fd.append('photo',blob,'photo.jpg');
-  const up=await fetch(srv.upload_url,{method:'POST',body:fd}).then(r=>r.json());
+  const up=await uploadFormData(srv.upload_url,fd);
   const saved=await api('photos.saveWallPhoto',{group_id:gid,photo:up.photo,server:up.server,hash:up.hash});
   if(saved&&saved[0])return 'photo'+saved[0].owner_id+'_'+saved[0].id;
   throw new Error('Не удалось сохранить фото');
