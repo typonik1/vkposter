@@ -15,6 +15,42 @@ function ss(t,c){const e=$('st');e.textContent=t;e.className='st s '+c}
 function $(id){return document.getElementById(id)}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
+function uploadFormData(url,formData){
+  return new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',url,true);
+    xhr.responseType='text';
+    xhr.onload=()=>{
+      try{
+        resolve(JSON.parse(xhr.responseText));
+      }catch(e){
+        reject(e);
+      }
+    };
+    xhr.onerror=()=>reject(new Error('Failed to upload'));
+    xhr.send(formData);
+  });
+}
+
+async function uploadPhotoToGroup(gid,photo){
+  const srv=await api('photos.getWallUploadServer',{group_id:gid});
+  const sizes=photo.sizes||[];
+  const best=
+    sizes.find(s=>s.type==='w')||
+    sizes.find(s=>s.type==='z')||
+    sizes.find(s=>s.type==='y')||
+    sizes.find(s=>s.type==='x')||
+    sizes[sizes.length-1];
+  if(!best)throw new Error('Не найдено фото для загрузки');
+  const blob=await fetch(best.url,{credentials:'include'}).then(r=>r.blob());
+  const fd=new FormData();
+  fd.append('photo',blob,'photo.jpg');
+  const up=await uploadFormData(srv.upload_url,fd);
+  const saved=await api('photos.saveWallPhoto',{group_id:gid,photo:up.photo,server:up.server,hash:up.hash});
+  if(saved&&saved[0])return 'photo'+saved[0].owner_id+'_'+saved[0].id;
+  throw new Error('Не удалось сохранить фото');
+}
+
 // Init
 (async()=>{
   const d=await chrome.storage.local.get(['vk_token','vkr_last_post','vkr_last_schedule']);
@@ -31,7 +67,11 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
     }catch(e){$('as').textContent='❌ Токен недействителен';$('as').className='ano'}
   }
   // Auto URL from content script or current page
-  if(d.vkr_last_post){
+  const params=new URLSearchParams(location.search);
+  const qp=params.get('post');
+  if(qp){
+    $('pu').value=qp;
+  }else if(d.vkr_last_post){
     $('pu').value=d.vkr_last_post;
     chrome.storage.local.remove('vkr_last_post');
   }else{
@@ -53,32 +93,24 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
   }
 })();
 
+chrome.storage.onChanged.addListener((changes)=>{
+  if(changes.vk_token&&changes.vk_token.newValue){
+    location.reload();
+  }
+});
+
 function show(){
   $('sp').style.display='block';
 }
 
 // Auth
-$('ba').onclick=()=>{
-  const u='https://oauth.vk.com/authorize?client_id='+AID+'&scope=wall,groups,photos,video,offline&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&v='+V;
-  chrome.tabs.create({url:u},(tab)=>{
-    const listener=(tid,info)=>{
-      if(tid===tab.id&&info.url&&info.url.includes('access_token=')){
-        const h=info.url.split('#')[1];
-        if(!h)return;
-        const params=new URLSearchParams(h);
-        const t=params.get('access_token');
-        if(t){
-          chrome.storage.local.set({vk_token:t},()=>{
-            chrome.tabs.remove(tab.id);
-            chrome.tabs.onUpdated.removeListener(listener);
-            tok=t;
-            location.reload();
-          });
-        }
-      }
-    };
-    chrome.tabs.onUpdated.addListener(listener);
-  });
+$('ba').onclick=async()=>{
+  try{
+    await chrome.runtime.sendMessage({type:'start_auth'});
+    ss('🔐 Окно авторизации открыто. После подтверждения токен сохранится автоматически.','i');
+  }catch(e){
+    ss('❌ Не удалось открыть окно авторизации.','e');
+  }
 };
 
 // Save token
@@ -278,27 +310,12 @@ $('go').onclick=async()=>{
             if(!obj)continue;
             
             if(tp==='photo'){
-              // Для фото загружаем на сервер группы (чтобы скрыть источник)
               try{
-                const srv=await api('photos.getWallUploadServer',{group_id:gid});
-                const sizes=obj.sizes||[];
-                const best=sizes.find(s=>s.type==='w')||sizes.find(s=>s.type==='z')||sizes[sizes.length-1];
-                if(best){
-                  // Скачиваем фото
-                  const blob=await fetch(best.url).then(r=>r.blob());
-                  const fd=new FormData();
-                  fd.append('photo',blob,'photo.jpg');
-                  // Загружаем на сервер группы
-                  const up=await fetch(srv.upload_url,{method:'POST',body:fd}).then(r=>r.json());
-                  // Сохраняем
-                  const saved=await api('photos.saveWallPhoto',{group_id:gid,photo:up.photo,server:up.server,hash:up.hash});
-                  if(saved&&saved[0])atts.push('photo'+saved[0].owner_id+'_'+saved[0].id);
-                }
+                const uploaded=await uploadPhotoToGroup(gid,obj);
+                atts.push(uploaded);
               }catch(e){
                 console.error('Photo upload error:',e);
-                // Fallback - используем оригинал (будет показан источник)
-                const ak=obj.access_key?'_'+obj.access_key:'';
-                atts.push('photo'+obj.owner_id+'_'+obj.id+ak);
+                throw new Error('Не удалось загрузить фото для группы: '+e.message);
               }
             }else if(tp==='video'){
               const ak=obj.access_key?'_'+obj.access_key:'';

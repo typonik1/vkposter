@@ -5,14 +5,22 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "https://vk.com/*",
     "https://vk.ru/*",
+    "https://*.vk.com/*",
     "https://api.vk.com/*",
-    "https://oauth.vk.com/*"
+    "https://oauth.vk.com/*",
+    "https://pu.vk.com/*",
+    "https://*.userapi.com/*",
+    "https://*.vkuserapi.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://vk.com/*", "https://vk.ru/*"],
